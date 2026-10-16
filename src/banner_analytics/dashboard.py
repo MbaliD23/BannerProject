@@ -15,14 +15,16 @@ from .repository import filter_frame, load_banner_frame, load_runs_frame
 
 logger = logging.getLogger(__name__)
 
-PURPLE = "#6F42D9"
-PURPLE_DARK = "#4B2A91"
-PURPLE_MID = "#9A7BE8"
-PURPLE_LIGHT = "#D8CDF8"
-YELLOW = "#D5A800"
-YELLOW_DARK = "#A77B00"
-YELLOW_LIGHT = "#FFF1A8"
-PLOT_COLOURS = [PURPLE, YELLOW, PURPLE_DARK, YELLOW_DARK, PURPLE_MID, YELLOW_LIGHT]
+PURPLE = "#6842D9"
+PURPLE_DARK = "#43248F"
+PURPLE_MID = "#A98CEA"
+PURPLE_LIGHT = "#EEE8FF"
+YELLOW = "#C9A227"
+YELLOW_DARK = "#8C6B10"
+YELLOW_LIGHT = "#FFF4C2"
+TEAL = "#2B827B"
+INK = "#1D1B24"
+PLOT_COLOURS = [PURPLE, YELLOW, TEAL, PURPLE_DARK, PURPLE_MID, "#E3C85A"]
 SITE_COLOURS = {"Hollywoodbets": PURPLE, "LuckyFish": YELLOW}
 
 
@@ -38,23 +40,64 @@ def _load_data(demo_mode: bool) -> tuple[pd.DataFrame, pd.DataFrame, str | None]
 
 
 def _header() -> None:
-    st.badge("Marketing intelligence platform", icon=":material/query_stats:", color="violet")
-    st.title("Banner Analytics", icon=":material/analytics:")
-    st.caption(
-        "Daily promotional monitoring across LuckyFish and Hollywoodbets — with campaign history, competitor signals and export-ready evidence."
+    with st.container(gap="small"):
+        st.badge("Marketing intelligence", icon=":material/query_stats:", color="violet")
+        st.title("Banner Analytics", icon=":material/analytics:")
+        st.caption(
+            "A clear daily view of promotional activity across LuckyFish and Hollywoodbets — from live creative to long-term competitor signals."
+        )
+
+
+def _premium_polish() -> None:
+    """Small, stable visual refinements layered on top of the native theme."""
+    st.html(
+        """
+        <style>
+        .stApp {
+            background:
+                radial-gradient(circle at 78% 0%, rgba(104, 66, 217, 0.055), transparent 30rem),
+                radial-gradient(circle at 20% 12%, rgba(201, 162, 39, 0.045), transparent 26rem),
+                #F5F5F7;
+        }
+        [data-testid="stHeader"] {
+            background: rgba(245, 245, 247, 0.78);
+            backdrop-filter: blur(18px) saturate(150%);
+            -webkit-backdrop-filter: blur(18px) saturate(150%);
+        }
+        [data-testid="stSidebar"] {
+            box-shadow: 12px 0 40px rgba(17, 13, 25, 0.10);
+        }
+        [data-testid="stMetric"],
+        [data-testid="stVerticalBlockBorderWrapper"] {
+            box-shadow: 0 10px 30px rgba(29, 27, 36, 0.055);
+        }
+        [data-testid="stMetric"] {
+            background: rgba(255, 255, 255, 0.88);
+        }
+        [data-testid="stImage"] img {
+            border-radius: 0.85rem;
+        }
+        .stPlotlyChart {
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+        </style>
+        """
     )
 
 
 def _sidebar(frame: pd.DataFrame) -> tuple[pd.DataFrame, str]:
     with st.sidebar:
         st.markdown("## Banner Analytics")
-        st.caption("PROMOTION INTELLIGENCE")
+        st.caption("DAILY CAMPAIGN INTELLIGENCE")
+        st.space("small")
+        st.markdown("#### Workspace")
         page = st.radio(
             "Navigation",
             ["Overview", "Banner gallery", "Trend analytics", "Competitor comparison", "Insights & exports", "Operations"],
             label_visibility="collapsed",
         )
-        st.markdown("#### Filters")
+        st.markdown("#### Refine this view")
         sites = sorted(frame["website"].dropna().unique()) if not frame.empty else []
         selected_sites = st.multiselect("Website", sites, default=sites)
         category_values = sorted({item for values in frame.get("category_list", []) for item in values}) if not frame.empty else []
@@ -83,13 +126,15 @@ def _plot(fig, key: str, alt: str) -> None:
     fig.update_layout(
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        font_color="#2D2938",
-        margin=dict(l=16, r=24, t=72, b=24),
+        font=dict(family="Inter, -apple-system, BlinkMacSystemFont, sans-serif", color=INK, size=13),
+        title=dict(font=dict(size=17, color=INK), x=0.01, xanchor="left"),
+        margin=dict(l=20, r=28, t=76, b=30),
         legend_title_text="",
-        hoverlabel=dict(bgcolor="#FFFFFF", font_color="#2D2938", bordercolor=PURPLE),
+        hoverlabel=dict(bgcolor="#FFFFFF", font_color=INK, bordercolor="#D8D3E2", font_size=13),
+        modebar=dict(bgcolor="rgba(255,255,255,.72)"),
     )
-    fig.update_xaxes(gridcolor="rgba(75,42,145,.10)", automargin=True)
-    fig.update_yaxes(gridcolor="rgba(75,42,145,.10)", automargin=True)
+    fig.update_xaxes(gridcolor="rgba(29,27,36,.07)", linecolor="rgba(29,27,36,.12)", automargin=True)
+    fig.update_yaxes(gridcolor="rgba(29,27,36,.07)", linecolor="rgba(29,27,36,.12)", automargin=True)
     st.plotly_chart(fig, width="stretch", key=key, alt=alt)
 
 
@@ -103,9 +148,10 @@ def overview(frame: pd.DataFrame, runs: pd.DataFrame) -> None:
     cols[1].metric("Active promotions", f"{active:,}", border=True, height="stretch")
     cols[2].metric("Websites monitored", frame["website"].nunique() if total else 0, border=True, height="stretch")
     cols[3].metric("Collection success", f"{success:.0f}%", border=True, height="stretch")
-    st.subheader("Current promotional landscape")
-    exploded = frame.explode("category_list") if total else frame
-    counts = exploded.groupby([pd.Grouper(key="capture_date", freq="MS"), "website"]).size().reset_index(name="banners") if total else pd.DataFrame()
+    st.space("small")
+    st.subheader("Current promotional landscape", icon=":material/monitoring:")
+    st.caption("How campaign volume and creative themes are moving across both competitors.")
+    counts = frame.groupby([pd.Grouper(key="capture_date", freq="MS"), "website"]).size().reset_index(name="banners") if total else pd.DataFrame()
     if not counts.empty:
         frequency = px.line(
             counts,
@@ -126,7 +172,13 @@ def overview(frame: pd.DataFrame, runs: pd.DataFrame) -> None:
             hovermode="x unified",
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
         )
-        _plot(frequency, "overview-frequency", "Interactive monthly promotion frequency by website")
+        frequency.update_xaxes(tickformat="%b %Y")
+        if counts["capture_date"].nunique() == 1:
+            centre = counts["capture_date"].iloc[0]
+            frequency.update_xaxes(range=[centre - pd.Timedelta(days=16), centre + pd.Timedelta(days=16)])
+            frequency.update_yaxes(range=[0, counts["banners"].max() + 1])
+        with st.container(border=True):
+            _plot(frequency, "overview-frequency", "Interactive monthly promotion frequency by website")
 
     categories = frame.explode("category_list")["category_list"].value_counts().head(8).rename_axis("category").reset_index(name="count") if total else pd.DataFrame()
     if not categories.empty:
@@ -148,8 +200,9 @@ def overview(frame: pd.DataFrame, runs: pd.DataFrame) -> None:
             cliponaxis=False,
         )
         category_chart.update_layout(showlegend=False, height=max(360, 62 * len(categories)))
-        _plot(category_chart, "overview-categories", "Banner captures by leading promotion category")
-    st.subheader("Recent banner changes")
+        with st.container(border=True):
+            _plot(category_chart, "overview-categories", "Banner captures by leading promotion category")
+    st.subheader("Recent banner changes", icon=":material/update:")
     recent = frame[frame["is_new"]].sort_values("capture_date", ascending=False).head(8)
     if recent.empty:
         st.info("No new banner changes detected in the selected period.")
@@ -158,7 +211,8 @@ def overview(frame: pd.DataFrame, runs: pd.DataFrame) -> None:
 
 
 def gallery(frame: pd.DataFrame) -> None:
-    st.markdown("### Banner gallery")
+    st.subheader("Banner gallery", icon=":material/photo_library:")
+    st.caption("Browse the creative, message and offer behind every captured promotion.")
     if frame.empty:
         st.info("No banners match the current filters.")
         return
@@ -230,17 +284,20 @@ def gallery(frame: pd.DataFrame) -> None:
     for start in range(0, min(len(display), 60), 2):
         columns = st.columns(2)
         for column, (_, row) in zip(columns, display.iloc[start : start + 2].iterrows()):
-            path = Path(str(row["image_path"])) if row["image_path"] else None
+            image_value = str(row["image_path"]).strip() if row["image_path"] else ""
+            path = Path(image_value) if image_value and not image_value.startswith(("http://", "https://")) else None
             with column.container(border=True, height="stretch"):
-                if path and path.is_file():
+                if image_value.startswith(("http://", "https://")):
+                    st.image(image_value, width="stretch", alt=f"Promotional banner: {row['headline']}")
+                elif path and path.is_file():
                     st.image(str(path), width="stretch", alt=f"Captured banner: {row['headline']}")
                 else:
-                    st.caption(":material/image: Screenshot not available in demonstration data")
+                    st.caption(":material/image: Artwork unavailable for this reference banner")
                 captured = pd.to_datetime(row["capture_date"]).strftime("%d %b %Y · %H:%M")
                 badge_colour = "yellow" if row["website"] == "LuckyFish" else "violet"
                 st.markdown(" ".join(f":{badge_colour}-badge[{item}]" for item in row["category_list"][:2]))
                 st.caption(f"{row['website']} · {captured}")
-                st.markdown(f"**{row['headline']}**")
+                st.markdown(f"#### {row['headline']}")
                 st.caption(str(row["description"]))
                 with st.expander("Capture detail", icon=":material/visibility:"):
                     st.write(row["ocr_text"] or "No OCR text detected")
@@ -248,7 +305,8 @@ def gallery(frame: pd.DataFrame) -> None:
 
 
 def trends(frame: pd.DataFrame) -> None:
-    st.markdown("### Trend analytics")
+    st.subheader("Trend analytics", icon=":material/trending_up:")
+    st.caption("See which campaign themes, keywords and providers are gaining momentum.")
     if frame.empty:
         st.info("No trend data for the current filters.")
         return
@@ -271,7 +329,8 @@ def trends(frame: pd.DataFrame) -> None:
 
 
 def comparison(frame: pd.DataFrame) -> None:
-    st.markdown("### Competitor comparison")
+    st.subheader("Competitor comparison", icon=":material/compare_arrows:")
+    st.caption("Compare promotional intensity and positioning without losing the underlying evidence.")
     if frame.empty:
         st.info("No comparison data for the current filters.")
         return
@@ -292,7 +351,8 @@ def comparison(frame: pd.DataFrame) -> None:
 
 
 def insights_exports(frame: pd.DataFrame) -> None:
-    st.markdown("### Analytical insights")
+    st.subheader("Analytical insights", icon=":material/auto_awesome:")
+    st.caption("Evidence-led signals calculated directly from the selected campaign data.")
     if frame.empty:
         st.info("No insight data for the current filters.")
         return
@@ -318,7 +378,8 @@ def insights_exports(frame: pd.DataFrame) -> None:
 
 
 def operations(runs: pd.DataFrame, data_warning: str | None) -> None:
-    st.markdown("### Collection operations")
+    st.subheader("Collection operations", icon=":material/settings_suggest:")
+    st.caption("Monitor collection health, schedule settings and configured sources.")
     settings = get_settings()
     with st.container(horizontal=True):
         st.metric("Daily run time", settings.schedule_time, border=True)
@@ -340,12 +401,13 @@ def operations(runs: pd.DataFrame, data_warning: str | None) -> None:
 
 def main() -> None:
     st.set_page_config(page_title="Banner Analytics", page_icon=":material/analytics:", layout="wide", initial_sidebar_state="expanded")
+    _premium_polish()
     settings = get_settings()
     frame, runs, warning = _load_data(settings.demo_mode)
     filtered, page = _sidebar(frame)
     _header()
     if warning or settings.demo_mode:
-        label = "Demo data" if settings.demo_mode else "Demo fallback · database offline"
+        label = "Reference snapshot · live database not connected" if settings.demo_mode else "Reference fallback · database offline"
         st.caption(f"● {label}")
     pages = {
         "Overview": lambda: overview(filtered, runs),

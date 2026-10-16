@@ -3,13 +3,18 @@ sites:
     name: LuckyFish
     url: https://www.luckyfish.co.za
     enabled: true
-    wait_until: networkidle
+    wait_until: domcontentloaded
+    ready_selectors:
+      - ".carousel.carousel-slider .slide img"
     carousel_selectors:
+      - ".carousel.carousel-slider"
+      - "[class*='BannerCarousel']"
       - "[class*='banner'] [class*='carousel']"
       - "[class*='hero'] [class*='slider']"
       - ".swiper"
       - "[class*='carousel']"
     slide_selectors:
+      - ".slide"
       - ".swiper-slide:not(.swiper-slide-duplicate)"
       - "[class*='slide']"
       - "a:has(img)"
@@ -25,13 +30,18 @@ sites:
     name: Hollywoodbets
     url: https://www.hollywoodbets.net
     enabled: true
-    wait_until: networkidle
+    wait_until: domcontentloaded
+    ready_selectors:
+      - ".carousel.carousel-slider .slide img"
     carousel_selectors:
+      - ".carousel.carousel-slider"
+      - "[class*='BannerCarousel']"
       - "[class*='banner'] [class*='carousel']"
       - "[class*='hero'] [class*='slider']"
       - ".swiper"
       - "[class*='carousel']"
     slide_selectors:
+      - ".slide"
       - ".swiper-slide:not(.swiper-slide-duplicate)"
       - "[class*='slide']"
       - "a:has(img)"

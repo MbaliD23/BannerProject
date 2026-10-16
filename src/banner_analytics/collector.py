@@ -72,7 +72,7 @@ class BannerCollector:
                 href = link.get_attribute("href") if link.count() else None
                 captures.append(
                     {
-                        "position": position + 1,
+                        "position": position,
                         "path": path,
                         "content_hash": content_hash,
                         "perceptual_hash": _perceptual_hash(path),
@@ -161,6 +161,12 @@ class BannerCollector:
                 page = browser.new_page(viewport={"width": 1920, "height": 1080}, device_scale_factor=1)
                 page.set_default_timeout(self.settings.timeout_ms)
                 page.goto(self.site["url"], wait_until=self.site.get("wait_until", "networkidle"))
+                for selector in self.site.get("ready_selectors", []):
+                    try:
+                        page.locator(selector).first.wait_for(state="visible", timeout=15000)
+                        break
+                    except Exception:
+                        continue
                 for selector in self.site.get("dismiss_selectors", []):
                     try:
                         page.locator(selector).first.click(timeout=1500)

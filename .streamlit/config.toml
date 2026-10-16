@@ -1,40 +1,50 @@
 [theme]
 base = "light"
-primaryColor = "#6F42D9"
-backgroundColor = "#F7F7F2"
+primaryColor = "#6842D9"
+backgroundColor = "#F5F5F7"
 secondaryBackgroundColor = "#FFFFFF"
-textColor = "#12383C"
-font = "sans-serif"
-borderColor = "#D7D2E2"
-linkColor = "#6F42D9"
-codeBackgroundColor = "#F1EEF8"
-baseRadius = "1rem"
-buttonRadius = "0.75rem"
+textColor = "#1D1B24"
+font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+headingFont = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap"
+borderColor = "#E3E1E8"
+linkColor = "#6842D9"
+codeBackgroundColor = "#F0EDF8"
+baseRadius = "1.15rem"
+buttonRadius = "0.9rem"
 showWidgetBorder = true
 showSidebarBorder = true
-paddingTop = "1.25rem"
-paddingBottom = "2rem"
-metricValueFontSize = "2rem"
-metricValueFontWeight = 700
-headingFontWeights = [750, 700, 650, 600, 600, 600]
-yellowColor = "#A77B00"
-yellowBackgroundColor = "#FFF6C9"
-yellowTextColor = "#5E4500"
-chartCategoricalColors = ["#6F42D9", "#D5A800", "#4B2A91", "#A77B00", "#9A7BE8", "#FFF1A8"]
-dataframeHeaderBackgroundColor = "#123F45"
-dataframeHeaderTextColor = "#F7FAFC"
-dataframeBorderColor = "#D7D2E2"
+paddingTop = "2rem"
+paddingBottom = "3rem"
+baseFontSize = 15
+baseFontWeight = 400
+metricValueFontSize = "2.15rem"
+metricValueFontWeight = 650
+headingFontSizes = ["2.5rem", "1.75rem", "1.35rem", "1.05rem", "0.95rem", "0.85rem"]
+headingFontWeights = [650, 650, 600, 600, 600, 600]
+yellowColor = "#B58B16"
+yellowBackgroundColor = "#FFF7D7"
+yellowTextColor = "#5A4300"
+violetColor = "#6842D9"
+violetBackgroundColor = "#EEE8FF"
+violetTextColor = "#4E2BAD"
+greenColor = "#177A70"
+greenBackgroundColor = "#DFF5F0"
+greenTextColor = "#105C55"
+chartCategoricalColors = ["#6842D9", "#C9A227", "#2B827B", "#A98CEA", "#756F80", "#E3C85A"]
+dataframeHeaderBackgroundColor = "#241C34"
+dataframeHeaderTextColor = "#FFFFFF"
+dataframeBorderColor = "#E3E1E8"
 
 [theme.sidebar]
-backgroundColor = "#07343A"
-secondaryBackgroundColor = "#0D454C"
-codeBackgroundColor = "#0A3B41"
-textColor = "#F7FAFC"
-borderColor = "#2B5B60"
-primaryColor = "#6F42D9"
-linkColor = "#F2D43D"
-paddingTop = "1rem"
-paddingBottom = "1.5rem"
+backgroundColor = "#15131B"
+secondaryBackgroundColor = "#211E2A"
+codeBackgroundColor = "#211E2A"
+textColor = "#F7F5FA"
+borderColor = "#322E3D"
+primaryColor = "#8B6AF0"
+linkColor = "#E4C64E"
+paddingTop = "1.35rem"
+paddingBottom = "2rem"
 
 [server]
 headless = true
