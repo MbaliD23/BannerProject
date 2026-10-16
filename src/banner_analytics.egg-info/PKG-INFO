@@ -1,0 +1,24 @@
+Metadata-Version: 2.4
+Name: banner-analytics
+Version: 1.0.0
+Summary: Promotional banner monitoring and competitor intelligence platform
+Requires-Python: >=3.11
+Requires-Dist: streamlit<2,>=1.66
+Requires-Dist: SQLAlchemy<3,>=2.0
+Requires-Dist: psycopg[binary]<4,>=3.2
+Requires-Dist: alembic<2,>=1.14
+Requires-Dist: pandas<4,>=2.2
+Requires-Dist: plotly<7,>=6
+Requires-Dist: playwright==1.58.*
+Requires-Dist: easyocr<2,>=1.7
+Requires-Dist: pytesseract<1,>=0.3.13
+Requires-Dist: Pillow<13,>=11
+Requires-Dist: numpy<3,>=2
+Requires-Dist: opencv-python-headless<5,>=4.10
+Requires-Dist: PyYAML<7,>=6
+Requires-Dist: python-dotenv<2,>=1
+Requires-Dist: APScheduler<4,>=3.11
+Requires-Dist: tenacity<10,>=9
+Requires-Dist: openpyxl<4,>=3.1
+Requires-Dist: dateparser<2,>=1.2
+Requires-Dist: click<9,>=8.1

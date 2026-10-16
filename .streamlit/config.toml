@@ -1,13 +1,13 @@
 [theme]
-base = "dark"
-primaryColor = "#8B5CF6"
-backgroundColor = "#071F25"
-secondaryBackgroundColor = "#0D3038"
-textColor = "#F7FAFC"
+base = "light"
+primaryColor = "#6F42D9"
+backgroundColor = "#F7F7F2"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#12383C"
 font = "sans-serif"
-borderColor = "#31515A"
-linkColor = "#7DE9DE"
-codeBackgroundColor = "#06191E"
+borderColor = "#D7D2E2"
+linkColor = "#6F42D9"
+codeBackgroundColor = "#F1EEF8"
 baseRadius = "1rem"
 buttonRadius = "0.75rem"
 showWidgetBorder = true
@@ -17,19 +17,22 @@ paddingBottom = "2rem"
 metricValueFontSize = "2rem"
 metricValueFontWeight = 700
 headingFontWeights = [750, 700, 650, 600, 600, 600]
-chartCategoricalColors = ["#8B5CF6", "#16D9C4", "#F4D84A", "#EF4A82", "#69A9FF", "#9AE6B4"]
-dataframeHeaderBackgroundColor = "#123640"
+yellowColor = "#A77B00"
+yellowBackgroundColor = "#FFF6C9"
+yellowTextColor = "#5E4500"
+chartCategoricalColors = ["#6F42D9", "#D5A800", "#4B2A91", "#A77B00", "#9A7BE8", "#FFF1A8"]
+dataframeHeaderBackgroundColor = "#123F45"
 dataframeHeaderTextColor = "#F7FAFC"
-dataframeBorderColor = "#31515A"
+dataframeBorderColor = "#D7D2E2"
 
 [theme.sidebar]
-backgroundColor = "#06191E"
-secondaryBackgroundColor = "#0D3038"
-codeBackgroundColor = "#071F25"
+backgroundColor = "#07343A"
+secondaryBackgroundColor = "#0D454C"
+codeBackgroundColor = "#0A3B41"
 textColor = "#F7FAFC"
-borderColor = "#31515A"
-primaryColor = "#8B5CF6"
-linkColor = "#7DE9DE"
+borderColor = "#2B5B60"
+primaryColor = "#6F42D9"
+linkColor = "#F2D43D"
 paddingTop = "1rem"
 paddingBottom = "1.5rem"
 

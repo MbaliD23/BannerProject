@@ -15,11 +15,15 @@ from .repository import filter_frame, load_banner_frame, load_runs_frame
 
 logger = logging.getLogger(__name__)
 
-PURPLE = "#8B5CF6"
-TEAL = "#16D9C4"
-YELLOW = "#F4D84A"
-PINK = "#EF4A82"
-PLOT_COLOURS = [PURPLE, TEAL, YELLOW, PINK, "#69A9FF", "#9AE6B4"]
+PURPLE = "#6F42D9"
+PURPLE_DARK = "#4B2A91"
+PURPLE_MID = "#9A7BE8"
+PURPLE_LIGHT = "#D8CDF8"
+YELLOW = "#D5A800"
+YELLOW_DARK = "#A77B00"
+YELLOW_LIGHT = "#FFF1A8"
+PLOT_COLOURS = [PURPLE, YELLOW, PURPLE_DARK, YELLOW_DARK, PURPLE_MID, YELLOW_LIGHT]
+SITE_COLOURS = {"Hollywoodbets": PURPLE, "LuckyFish": YELLOW}
 
 
 @st.cache_data(ttl=300, show_spinner=False)
@@ -79,12 +83,13 @@ def _plot(fig, key: str, alt: str) -> None:
     fig.update_layout(
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        font_color="#D6E3E6",
-        margin=dict(l=8, r=8, t=48, b=8),
+        font_color="#2D2938",
+        margin=dict(l=16, r=24, t=72, b=24),
         legend_title_text="",
+        hoverlabel=dict(bgcolor="#FFFFFF", font_color="#2D2938", bordercolor=PURPLE),
     )
-    fig.update_xaxes(gridcolor="rgba(255,255,255,.06)")
-    fig.update_yaxes(gridcolor="rgba(255,255,255,.06)")
+    fig.update_xaxes(gridcolor="rgba(75,42,145,.10)", automargin=True)
+    fig.update_yaxes(gridcolor="rgba(75,42,145,.10)", automargin=True)
     st.plotly_chart(fig, width="stretch", key=key, alt=alt)
 
 
@@ -99,16 +104,51 @@ def overview(frame: pd.DataFrame, runs: pd.DataFrame) -> None:
     cols[2].metric("Websites monitored", frame["website"].nunique() if total else 0, border=True, height="stretch")
     cols[3].metric("Collection success", f"{success:.0f}%", border=True, height="stretch")
     st.subheader("Current promotional landscape")
-    left, right = st.columns([1.35, 1])
-    with left:
-        exploded = frame.explode("category_list") if total else frame
-        counts = exploded.groupby([pd.Grouper(key="capture_date", freq="MS"), "website"]).size().reset_index(name="banners") if total else pd.DataFrame()
-        if not counts.empty:
-            _plot(px.area(counts, x="capture_date", y="banners", color="website", title="Promotion frequency over time", color_discrete_sequence=PLOT_COLOURS), "overview-frequency", "Monthly promotion captures by website")
-    with right:
-        categories = frame.explode("category_list")["category_list"].value_counts().head(8).rename_axis("category").reset_index(name="count") if total else pd.DataFrame()
-        if not categories.empty:
-            _plot(px.bar(categories, x="count", y="category", orientation="h", title="Leading categories", color="category", color_discrete_sequence=PLOT_COLOURS), "overview-categories", "Promotion counts by leading category")
+    exploded = frame.explode("category_list") if total else frame
+    counts = exploded.groupby([pd.Grouper(key="capture_date", freq="MS"), "website"]).size().reset_index(name="banners") if total else pd.DataFrame()
+    if not counts.empty:
+        frequency = px.line(
+            counts,
+            x="capture_date",
+            y="banners",
+            color="website",
+            markers=True,
+            title="Promotion frequency over time",
+            color_discrete_map=SITE_COLOURS,
+            labels={"capture_date": "Month", "banners": "Banner captures", "website": "Website"},
+        )
+        frequency.update_traces(
+            line=dict(width=3),
+            marker=dict(size=9, line=dict(width=2, color="#FFFFFF")),
+            hovertemplate="<b>%{fullData.name}</b><br>%{x|%b %Y}<br>%{y} banner captures<extra></extra>",
+        )
+        frequency.update_layout(
+            hovermode="x unified",
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+        )
+        _plot(frequency, "overview-frequency", "Interactive monthly promotion frequency by website")
+
+    categories = frame.explode("category_list")["category_list"].value_counts().head(8).rename_axis("category").reset_index(name="count") if total else pd.DataFrame()
+    if not categories.empty:
+        categories = categories.sort_values("count", ascending=True)
+        category_chart = px.bar(
+            categories,
+            x="count",
+            y="category",
+            orientation="h",
+            title="Leading categories",
+            color="category",
+            color_discrete_sequence=PLOT_COLOURS,
+            labels={"count": "Banner captures", "category": "Promotion category"},
+            text="count",
+        )
+        category_chart.update_traces(
+            hovertemplate="<b>%{y}</b><br>%{x} banner captures<extra></extra>",
+            textposition="outside",
+            cliponaxis=False,
+        )
+        category_chart.update_layout(showlegend=False, height=max(360, 62 * len(categories)))
+        _plot(category_chart, "overview-categories", "Banner captures by leading promotion category")
     st.subheader("Recent banner changes")
     recent = frame[frame["is_new"]].sort_values("capture_date", ascending=False).head(8)
     if recent.empty:
@@ -119,19 +159,77 @@ def overview(frame: pd.DataFrame, runs: pd.DataFrame) -> None:
 
 def gallery(frame: pd.DataFrame) -> None:
     st.markdown("### Banner gallery")
-    sort = st.selectbox("Sort", ["Newest first", "Oldest first", "Highest prize value"], label_visibility="collapsed")
-    if sort == "Oldest first":
-        display = frame.sort_values("capture_date")
-    elif sort == "Highest prize value":
-        display = frame.sort_values("max_prize", ascending=False)
-    else:
-        display = frame.sort_values("capture_date", ascending=False)
-    if display.empty:
+    if frame.empty:
         st.info("No banners match the current filters.")
         return
-    for start in range(0, min(len(display), 60), 3):
-        columns = st.columns(3)
-        for column, (_, row) in zip(columns, display.iloc[start : start + 3].iterrows()):
+
+    with st.container(border=True):
+        st.markdown("#### Gallery filters")
+        first_row = st.columns(2)
+        sort = first_row[0].selectbox(
+            "Sort by",
+            ["Newest first", "Oldest first", "Highest prize value", "Active promotions first", "Website A–Z"],
+        )
+        status = first_row[1].segmented_control(
+            "Promotion status",
+            ["All", "Active", "Newly detected"],
+            default="All",
+            key="gallery-status",
+        )
+
+        captured = pd.to_datetime(frame["capture_date"], utc=True)
+        second_row = st.columns(2)
+        gallery_dates = second_row[0].date_input(
+            "Captured between",
+            value=(captured.min().date(), captured.max().date()),
+            key="gallery-dates",
+        )
+        gallery_sites = second_row[1].multiselect(
+            "Website",
+            sorted(frame["website"].dropna().unique()),
+            default=sorted(frame["website"].dropna().unique()),
+            key="gallery-sites",
+        )
+        gallery_categories = st.multiselect(
+            "Promotion category",
+            sorted({item for values in frame["category_list"] for item in values}),
+            key="gallery-categories",
+            placeholder="All promotion categories",
+        )
+
+    display = frame.copy()
+    if gallery_sites:
+        display = display[display["website"].isin(gallery_sites)]
+    else:
+        display = display.iloc[0:0]
+    if isinstance(gallery_dates, (tuple, list)) and len(gallery_dates) == 2:
+        display_dates = pd.to_datetime(display["capture_date"], utc=True).dt.date
+        display = display[(display_dates >= gallery_dates[0]) & (display_dates <= gallery_dates[1])]
+    if gallery_categories:
+        selected = set(gallery_categories)
+        display = display[display["category_list"].apply(lambda values: bool(selected.intersection(values)))]
+    if status == "Active":
+        display = display[display["is_active"]]
+    elif status == "Newly detected":
+        display = display[display["is_new"]]
+
+    if sort == "Oldest first":
+        display = display.sort_values("capture_date")
+    elif sort == "Highest prize value":
+        display = display.sort_values("max_prize", ascending=False)
+    elif sort == "Active promotions first":
+        display = display.sort_values(["is_active", "capture_date"], ascending=[False, False])
+    elif sort == "Website A–Z":
+        display = display.sort_values(["website", "capture_date"], ascending=[True, False])
+    else:
+        display = display.sort_values("capture_date", ascending=False)
+    st.caption(f"Showing {len(display):,} matching banner captures")
+    if display.empty:
+        st.info("No banners match the gallery filters. Try widening the date range or clearing a selection.")
+        return
+    for start in range(0, min(len(display), 60), 2):
+        columns = st.columns(2)
+        for column, (_, row) in zip(columns, display.iloc[start : start + 2].iterrows()):
             path = Path(str(row["image_path"])) if row["image_path"] else None
             with column.container(border=True, height="stretch"):
                 if path and path.is_file():
@@ -139,7 +237,8 @@ def gallery(frame: pd.DataFrame) -> None:
                 else:
                     st.caption(":material/image: Screenshot not available in demonstration data")
                 captured = pd.to_datetime(row["capture_date"]).strftime("%d %b %Y · %H:%M")
-                st.markdown(" ".join(f":violet-badge[{item}]" for item in row["category_list"][:2]))
+                badge_colour = "yellow" if row["website"] == "LuckyFish" else "violet"
+                st.markdown(" ".join(f":{badge_colour}-badge[{item}]" for item in row["category_list"][:2]))
                 st.caption(f"{row['website']} · {captured}")
                 st.markdown(f"**{row['headline']}**")
                 st.caption(str(row["description"]))
@@ -159,12 +258,12 @@ def trends(frame: pd.DataFrame) -> None:
     left, right = st.columns(2)
     with left:
         site_month = frame.groupby([pd.Grouper(key="capture_date", freq="MS"), "website"]).size().reset_index(name="count")
-        _plot(px.bar(site_month, x="capture_date", y="count", color="website", barmode="group", title="Monthly promotion counts", color_discrete_sequence=PLOT_COLOURS), "trend-monthly", "Monthly banner capture count by website")
+        _plot(px.bar(site_month, x="capture_date", y="count", color="website", barmode="group", title="Monthly promotion counts", color_discrete_map=SITE_COLOURS), "trend-monthly", "Monthly banner capture count by website")
     with right:
         keywords = Counter(word.strip() for value in frame["keywords"] for word in str(value).split(",") if word.strip())
         keyword_frame = pd.DataFrame(keywords.most_common(10), columns=["keyword", "count"])
         if not keyword_frame.empty:
-            _plot(px.bar(keyword_frame, x="count", y="keyword", orientation="h", title="Most recurring keywords", color="count", color_continuous_scale=["#123640", TEAL]), "trend-keywords", "Frequency of recurring promotional keywords")
+            _plot(px.bar(keyword_frame, x="count", y="keyword", orientation="h", title="Most recurring keywords", color="count", color_continuous_scale=[YELLOW_LIGHT, PURPLE]), "trend-keywords", "Frequency of recurring promotional keywords")
     brands = Counter(word.strip() for value in frame["brands"] for word in str(value).split(",") if word.strip())
     if brands:
         st.markdown("#### Most advertised games and providers")
@@ -178,16 +277,16 @@ def comparison(frame: pd.DataFrame) -> None:
         return
     exploded = frame.explode("category_list")
     distribution = exploded.groupby(["website", "category_list"]).size().reset_index(name="count")
-    _plot(px.bar(distribution, x="category_list", y="count", color="website", barmode="group", title="Promotion category distribution", color_discrete_sequence=PLOT_COLOURS), "comparison-category", "Category distribution for each competitor")
+    _plot(px.bar(distribution, x="category_list", y="count", color="website", barmode="group", title="Promotion category distribution", color_discrete_map=SITE_COLOURS), "comparison-category", "Category distribution for each competitor")
     left, right = st.columns(2)
     with left:
         prizes = frame[frame["max_prize"] > 0]
         if not prizes.empty:
-            _plot(px.box(prizes, x="website", y="max_prize", color="website", points="all", title="Advertised prize value distribution", color_discrete_sequence=PLOT_COLOURS, labels={"max_prize": "Prize value (R)"}), "comparison-prize", "Advertised prize value ranges by competitor")
+            _plot(px.box(prizes, x="website", y="max_prize", color="website", points="all", title="Advertised prize value distribution", color_discrete_map=SITE_COLOURS, labels={"max_prize": "Prize value (R)"}), "comparison-prize", "Advertised prize value ranges by competitor")
     with right:
         indicators = ["App Download Promotion", "Welcome Bonus", "Deposit Bonus", "Jackpot Promotion"]
         activity = distribution[distribution["category_list"].isin(indicators)]
-        _plot(px.bar(activity, x="category_list", y="count", color="website", barmode="group", title="Strategic activity signals", color_discrete_sequence=PLOT_COLOURS), "comparison-signals", "App, bonus, and jackpot promotion activity by competitor")
+        _plot(px.bar(activity, x="category_list", y="count", color="website", barmode="group", title="Strategic activity signals", color_discrete_map=SITE_COLOURS), "comparison-signals", "App, bonus, and jackpot promotion activity by competitor")
     summary = frame.groupby("website").agg(campaigns=("id", "count"), new_campaigns=("is_new", "sum"), active=("is_active", "sum"), highest_prize=("max_prize", "max")).reset_index()
     st.dataframe(summary, width="stretch", hide_index=True, alt="Competitor promotion activity summary")
 
@@ -221,10 +320,10 @@ def insights_exports(frame: pd.DataFrame) -> None:
 def operations(runs: pd.DataFrame, data_warning: str | None) -> None:
     st.markdown("### Collection operations")
     settings = get_settings()
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Daily run time", settings.schedule_time)
-    col2.metric("Timezone", settings.timezone)
-    col3.metric("Configured sites", len(load_sites()))
+    with st.container(horizontal=True):
+        st.metric("Daily run time", settings.schedule_time, border=True)
+        st.metric("Timezone", settings.timezone, border=True)
+        st.metric("Configured sites", len(load_sites()), border=True)
     if data_warning:
         st.warning("Database unavailable; showing the built-in demonstration dataset. Start PostgreSQL and initialize the schema to use live data.")
         with st.expander("Technical detail"):

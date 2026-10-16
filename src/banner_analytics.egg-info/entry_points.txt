@@ -1,0 +1,2 @@
+[console_scripts]
+banner-analytics = banner_analytics.cli:main
