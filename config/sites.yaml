@@ -1,0 +1,46 @@
+sites:
+  - key: luckyfish
+    name: LuckyFish
+    url: https://www.luckyfish.co.za
+    enabled: true
+    wait_until: networkidle
+    carousel_selectors:
+      - "[class*='banner'] [class*='carousel']"
+      - "[class*='hero'] [class*='slider']"
+      - ".swiper"
+      - "[class*='carousel']"
+    slide_selectors:
+      - ".swiper-slide:not(.swiper-slide-duplicate)"
+      - "[class*='slide']"
+      - "a:has(img)"
+    image_selectors: ["img", "picture img"]
+    next_selectors:
+      - ".swiper-button-next"
+      - "button[aria-label*='next' i]"
+      - "[class*='next']"
+    dismiss_selectors:
+      - "button:has-text('Accept')"
+      - "button:has-text('Close')"
+  - key: hollywoodbets
+    name: Hollywoodbets
+    url: https://www.hollywoodbets.net
+    enabled: true
+    wait_until: networkidle
+    carousel_selectors:
+      - "[class*='banner'] [class*='carousel']"
+      - "[class*='hero'] [class*='slider']"
+      - ".swiper"
+      - "[class*='carousel']"
+    slide_selectors:
+      - ".swiper-slide:not(.swiper-slide-duplicate)"
+      - "[class*='slide']"
+      - "a:has(img)"
+    image_selectors: ["img", "picture img"]
+    next_selectors:
+      - ".swiper-button-next"
+      - "button[aria-label*='next' i]"
+      - "[class*='next']"
+    dismiss_selectors:
+      - "button:has-text('Accept')"
+      - "button:has-text('Close')"
+

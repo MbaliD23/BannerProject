@@ -1,0 +1,51 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: banner_analytics
+      POSTGRES_USER: banner
+      POSTGRES_PASSWORD: banner
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U banner -d banner_analytics"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  dashboard:
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://banner:banner@db:5432/banner_analytics
+    ports:
+      - "8501:8501"
+    volumes:
+      - banner_images:/app/data/banners
+      - app_logs:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "banner-analytics init-db && streamlit run app.py --server.address=0.0.0.0"
+    restart: unless-stopped
+
+  scheduler:
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://banner:banner@db:5432/banner_analytics
+    volumes:
+      - banner_images:/app/data/banners
+      - app_logs:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "banner-analytics init-db && banner-analytics scheduler"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  banner_images:
+  app_logs:
+
